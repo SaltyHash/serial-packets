@@ -1,0 +1,10 @@
+# Classes
+SerialPackets	KEYWORD1
+
+# Functions
+ReadPacket	KEYWORD2
+ReadPacketNonblocking	KEYWORD2
+WritePacket	KEYWORD2
+
+# Constants
+kPacketHeaderLen	LITERAL1
