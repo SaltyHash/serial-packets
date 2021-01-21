@@ -36,7 +36,7 @@ class SerialPackets:
         """Returns the maximum length of the data that can be sent in a packet."""
         return self._max_data_len
 
-    def read_packet(self) -> Optional[bytes]:
+    def read(self) -> Optional[bytes]:
         """
         Blocks until a valid packet is received, or a serial timeout occurs. If a valid packet is received, then the
         data bytes are returned. If a serial timeout occurs, then None is returned.
@@ -74,7 +74,7 @@ class SerialPackets:
 
         return data
 
-    def write_packet(self, data: Union[bytearray, bytes]) -> None:
+    def write(self, data: Union[bytearray, bytes]) -> None:
         """
         Returns True if the packet was sent, or False if it was not (in which case it may have been partially sent).
 
@@ -119,8 +119,8 @@ class SerialPackets:
                 except AttributeError:
                     pass
 
-            self.write_packet(data)
-            return self.read_packet()
+            self.write(data)
+            return self.read()
 
 
 class ChecksumError(Exception):
@@ -164,6 +164,11 @@ def _speed_test(packets: SerialPackets):
 
     random.seed(0)
     data_len = packets.get_max_data_len()
+
+    print(f'Starting speed test with:')
+    print(f'- baud={packets.serial_conn.baudrate}')
+    print(f'- data_len={data_len}')
+    print()
 
     while True:
         total_bytes = 0
@@ -257,7 +262,6 @@ def _main():
         print('Waiting 3 seconds, because connecting to the Arduino causes it to reset...')
         time.sleep(3)
 
-        print('Starting speed test!')
         try:
             _speed_test(packets)
         except KeyboardInterrupt:
