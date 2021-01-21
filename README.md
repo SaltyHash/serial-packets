@@ -38,7 +38,7 @@ python3 serial_packets.py
 ```
 
 ## Notes
-
+### Packet Data Length
 - Make sure you don't send a packet that is so long that it overflows the microcontroller's read buffer. The maximum
   amount of data that can be sent in a single packet can be determined using this formula: \
   `max_packet_data_len = usable_read_buffer_len - 4 [packet header length]`
@@ -47,3 +47,13 @@ python3 serial_packets.py
   `(64 - 1) [usable Arduino read buffer length] - 4 [packet header length] = 59 bytes`
 - If read buffer size is not an issue (i.e. for some non-Arduino microcontrollers), then the maximum length of data that
   can be sent in a single packet is **255 bytes**.
+
+### Packet Structure
+A single packet is composed of a 4-byte header, followed by the data, like so:
+
+```
+[start_byte := 0xAA | fletcher16_sum2 | fletcher16_sum1 | data_len | data_byte_1 | ... data_byte_N]
+```
+
+So as you can see, the maximum length of data that a packet can send is limited by the data_len byte, which can
+represent data between 0 and 255 bytes long, inclusive.
