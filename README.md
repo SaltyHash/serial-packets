@@ -11,30 +11,48 @@ The design goals of this library include:
 ## Getting Started
 
 ```bash
-# Clone the serial-packets repository
-git clone https://github.com/SaltyHash/serial-packets.git
-cd serial-packets/
+$ # Clone the serial-packets repository
+$ git clone https://github.com/SaltyHash/serial-packets.git
+$ cd serial-packets/
 ```
 
 ### Arduino (or compatible microcontroller)
 
 ```bash
-# Copy the SerialPackets library into the Arduino libraries 
-./copy-arduino-library.sh
+$ # Copy the SerialPackets library into the Arduino libraries 
+$ ./copy-arduino-library.sh
 ```
 
 Now that the SerialPackets library has been copied into your Arduino libraries, (re)start your Arduino IDE so it can
 pick up the new library.
 
-To see example usage of the library in a [simple echo application](/src/arduino/SerialPackets/examples/Echo/Echo.ino),
+To see example usage of the library in a [simple Echo project](/src/arduino/SerialPackets/examples/Echo/Echo.ino),
 select "File > Examples > SerialPackets > Echo". If you load this into your microcontroller, it will simply read a
 packet, and then write a packet containing the same data that it just received.
 
 ### Python
 
+If you have loaded the Echo project into your microcontroller, you can run the `serialpackets.py` module directly to
+perform a speed test.
+
 ```bash
-cd src/python/
-python3 serial_packets.py
+$ cd src/python/
+$ python3 serialpackets.py
+```
+
+To use the `serialpackets.py` module in your own Python project, just make sure it is in your `PYTHONPATH`, e.g.:
+```bash
+$ export PYTHONPATH=/path/to/serial-packets/src/python
+$ python3
+```
+```python
+>>> import serial, serialpackets
+>>> with serial.Serial(...) as serial_conn:
+...     packets = serialpackets.SerialPackets(serial_conn)
+...     packets.write(b'Hello, world!')
+...     print(packets.read())
+...
+b'Hello, world!'
 ```
 
 ## Notes
