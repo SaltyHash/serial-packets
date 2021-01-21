@@ -108,9 +108,14 @@ int SerialPackets::ReadPacketNonblocking(uint8_t buffer[], const uint8_t buffer_
 
     read_packet_state_ = PacketTransitState::kStartByte;
 
+    // Had to receive a packet that was too big for the buffer? Throw the packet away
+    if (read_packet_data_len_ > buffer_len) {
+      return -1;
+    }
+
+    // Return the length of the packet data if the checksums match; otherwise, throw the packet away
     const uint16_t calculated_checksum = Fletcher16(buffer, read_packet_data_len_);
-    //return read_packet_checksum_ == calculated_checksum ? read_packet_data_len_ : -1;
-    return read_packet_data_len_;
+    return read_packet_checksum_ == calculated_checksum ? read_packet_data_len_ : -1;
   }
 
   return -1;
