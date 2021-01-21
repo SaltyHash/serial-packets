@@ -3,47 +3,38 @@
 from threading import RLock
 from typing import Any, Optional, Union, Tuple
 
+PACKET_HEADER_LEN = 4
+MAX_ALLOWED_DATA_LEN = 255
 DEFAULT_MAX_PACKET_LEN = 63
+DEFAULT_MAX_DATA_LEN = DEFAULT_MAX_PACKET_LEN - PACKET_HEADER_LEN
 
-_PACKET_HEADER_LEN = 4
-_MAX_ALLOWED_PACKET_DATA_LEN = 255
 _START_BYTE = b'\xAA'
 
 
 class SerialPackets:
     """"""
 
-    def __init__(self, serial_conn: Any, max_packet_len: int = DEFAULT_MAX_PACKET_LEN):
+    def __init__(self, serial_conn: Any, max_data_len: int = DEFAULT_MAX_DATA_LEN):
         """
         :param serial_conn:
-        :param max_packet_len: Defaults to DEFAULT_MAX_PACKET_LEN, which is the usable size of an Arduino's read buffer.
+        :param max_data_len: The maximum amount of data allowed to be sent in a single packet.
+            Defaults to DEFAULT_MAX_PACKET_DATA_LEN. Must be in range [0, MAX_ALLOWED_PACKET_DATA_LEN], inclusive.
         """
 
         self.serial_conn = serial_conn
 
-        if max_packet_len < _PACKET_HEADER_LEN:
-            raise ValueError(f'max_packet_len must be >= {_PACKET_HEADER_LEN}; got {max_packet_len}.')
-        max_allowed_packet_len = _PACKET_HEADER_LEN + _MAX_ALLOWED_PACKET_DATA_LEN
-        if max_packet_len > max_allowed_packet_len:
-            raise ValueError(f'max_packet_len must be <= {max_allowed_packet_len}; got {max_packet_len}.')
-        self._max_packet_data_len = max_packet_len - _PACKET_HEADER_LEN
+        if max_data_len < 0:
+            raise ValueError(f'max_packet_data_len must be >= 0; got {max_data_len}.')
+        if max_data_len > MAX_ALLOWED_DATA_LEN:
+            raise ValueError(f'max_data_len must be <= {MAX_ALLOWED_DATA_LEN}; got {max_data_len}.')
+        self._max_data_len = max_data_len
 
         self._read_lock = RLock()
         self._write_lock = RLock()
 
-    def __enter__(self):
-        if hasattr(self.serial_conn, '__enter__'):
-            self.serial_conn.__enter__()
-
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if hasattr(self.serial_conn, '__exit__'):
-            return self.serial_conn.__exit__(exc_type, exc_val, exc_tb)
-
-    def get_max_packet_data_len(self) -> int:
-        """Returns the maximum length of the data that can be sent/received in a packet."""
-        return self._max_packet_data_len
+    def get_max_data_len(self) -> int:
+        """Returns the maximum length of the data that can be sent in a packet."""
+        return self._max_data_len
 
     def read_packet(self) -> Optional[bytes]:
         """
@@ -92,8 +83,8 @@ class SerialPackets:
         :raises WritePacketError: If something goes wrong writing the packet.
         """
 
-        if len(data) > self._max_packet_data_len:
-            raise ValueError(f'data must be <= {self._max_packet_data_len} bytes long; '
+        if len(data) > self._max_data_len:
+            raise ValueError(f'data must be <= {self._max_data_len} bytes long; '
                              f'given data is {len(data)} bytes long.')
 
         packet = bytearray()
@@ -167,49 +158,30 @@ def _fletcher16(data: Union[bytearray, bytes]) -> Tuple[int, int]:
     return sum_2, sum_1
 
 
-# def _get_checksum(data: Union[bytearray, bytes]) -> int:
-#     checksum = len(data)
-#
-#     for byte in data:
-#         checksum ^= byte
-#
-#     checksum = ~checksum & 0xFF
-#     return checksum
-
-
-def _echo_test(packets: SerialPackets):
-    while True:
-        packets.write_packet(input('Write: ').encode())
-        print('Reading...')
-        print(f'Read: {packets.read_packet()}')
-
-
 def _speed_test(packets: SerialPackets):
     import random
     import time
 
-    # max_data_len = packets.get_max_packet_data_len()
-    max_data_len = 59
+    random.seed(0)
+    data_len = packets.get_max_data_len()
 
     while True:
         total_bytes = 0
         total_packets = 0
         total_time = 0
-        while total_time < 1:
-            data_len = random.randint(0, max_data_len)
-            data_len = max_data_len
 
+        while total_time < 1:
             data = bytes(random.randint(0, 255) for _ in range(data_len))
 
-            t0 = time.time()
+            start_time = time.time()
             try:
                 response = packets.write_then_read_packet(data)
             except (ChecksumError, WritePacketError) as e:
                 print(e)
                 continue
-            total_bytes += data_len + len(response)
-            total_packets += 2
-            total_time += time.time() - t0
+            total_time += time.time() - start_time
+            total_bytes += data_len
+            total_packets += 1
 
             if response != data:
                 print('ERROR:')
@@ -223,8 +195,10 @@ def _speed_test(packets: SerialPackets):
 
 
 def _main():
+    import argparse
     import random
     import serial
+    import time
 
     class TestSerial(serial.Serial):
         def __init__(self, *args, read_error_rate: float = 0.0, write_error_rate: float = 0.0, **kwargs):
@@ -246,11 +220,48 @@ def _main():
                     new_data.append(datum)
             return super().write(new_data)
 
-    with SerialPackets(TestSerial('/dev/ttyACM0', baudrate=2000000, timeout=0.3, read_error_rate=0.000,
-                                  write_error_rate=0.000)) as packets:
-        import time; time.sleep(2)
-        _speed_test(packets)
-        # _echo_test(packets)
+    parser = argparse.ArgumentParser(
+        description=r'''
+        If you have the Echo example project loaded into your microcontroller, running this module will perform a "speed
+        test" that will write packets of random data to your microcontroller, read the response packets, and print
+        statistics about byte and packet rates.
+        ''',
+        epilog=r'''Simple example: python3 serial_packets.py /dev/ttyACM0'''
+    )
+
+    parser.add_argument(
+        'device',
+        help='On Linux, this is something like "/dev/ttyACM0". '
+             'On Windows, this is something like "COM0".'
+    )
+    parser.add_argument(
+        '--data-len', default=DEFAULT_MAX_DATA_LEN, type=int,
+        help=f'Number of bytes to send. Defaults to DEFAULT_MAX_DATA_LEN={DEFAULT_MAX_DATA_LEN} bytes.'
+    )
+    parser.add_argument(
+        '--baud', default=2000000, type=int,
+        help='Baud rate. Defaults to 2000000, which is the fastest the Arduino (ATmega328P @ 16MHz) can handle.'
+    )
+    parser.add_argument(
+        '--timeout', default=1.0, type=float,
+        help='Serial read/write timeout. Defaults to 1.0 seconds.'
+    )
+
+    args = parser.parse_args()
+
+    with TestSerial(args.device, baudrate=args.baud, timeout=args.timeout,
+                    read_error_rate=0.000, write_error_rate=0.000) \
+            as serial_conn:
+        packets = SerialPackets(serial_conn, max_data_len=args.data_len)
+
+        print('Waiting 3 seconds, because connecting to the Arduino causes it to reset...')
+        time.sleep(3)
+
+        print('Starting speed test!')
+        try:
+            _speed_test(packets)
+        except KeyboardInterrupt:
+            print()
 
 
 if __name__ == '__main__':
