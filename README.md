@@ -32,28 +32,34 @@ packet, and then write a packet containing the same data that it just received.
 
 ### Python
 
-If you have loaded the Echo project into your microcontroller, you can run the `serialpackets.py` module directly to
-perform a speed test.
-
-```bash
-$ cd src/python/
-$ python3 serialpackets.py
-```
-
 To use the `serialpackets.py` module in your own Python project, just make sure it is in your `PYTHONPATH`, e.g.:
 ```bash
 $ export PYTHONPATH=/path/to/serial-packets/src/python
 $ python3
 ```
 ```python
->>> import serial, serialpackets
->>> with serial.Serial(...) as serial_conn:
-...     packets = serialpackets.SerialPackets(serial_conn)
+>>> from serial import Serial
+>>> from serialpackets import SerialPackets
+>>> with Serial(...) as serial_conn:
+...     packets = SerialPackets(serial_conn)
 ...     packets.write(b'Hello, world!')
 ...     print(packets.read())
 ...
-b'Hello, world!'
+b'Hello, how are you?'
 ```
+
+If you have loaded the Echo project into your microcontroller, you can run the `serialpackets_echotest.py` module
+directly to ensure it is working, and to display speed statistics:
+
+```bash
+$ cd test/python
+$ export PYTHONPATH=../../src/python
+$ python3 serialpackets_echotest.py <device>
+e.g.
+$ python3 serialpackets_echotest.py /dev/ttyACM0
+```
+
+Run `python3 serialpackets_echotest.py -h` to view all the optional arguments.
 
 ## Notes
 ### Packet Data Length
