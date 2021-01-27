@@ -26,20 +26,23 @@ $ ./copy-arduino-library.sh
 Now that the SerialPackets library has been copied into your Arduino libraries, (re)start your Arduino IDE so it can
 pick up the new library.
 
-To see example usage of the library in a [simple Echo project](/src/arduino/SerialPackets/examples/Echo/Echo.ino),
+To see example usage of the library in a simple [Echo project](/src/arduino/SerialPackets/examples/Echo/Echo.ino),
 select "File > Examples > SerialPackets > Echo". If you load this into your microcontroller, it will simply read a
 packet, and then write a packet containing the same data that it just received.
 
 ### Python
 
-To use the `serialpackets.py` module in your own Python project, just make sure it is in your `PYTHONPATH`, e.g.:
+To use the `serialpackets.py` module in your own Python project, just make sure you have the `pyserial` library
+installed, and the `serialpackets` library is in your `PYTHONPATH`, e.g.:
 ```bash
+$ pip install pyserial    # You are in a virtualenv, right?
 $ export PYTHONPATH=/path/to/serial-packets/src/python
 $ python3
 ```
 ```python
 >>> from serial import Serial
 >>> from serialpackets import SerialPackets
+>>>
 >>> with Serial(...) as serial_conn:
 ...     packets = SerialPackets(serial_conn)
 ...     packets.write(b'Hello, world!')
