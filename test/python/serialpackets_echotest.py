@@ -17,9 +17,12 @@ def speed_test(packets: serialpackets.SerialPackets):
     random.seed(0)
     data_len = packets.get_max_data_len()
 
+    print()
     print(f'Starting echo test with:')
     print(f'- baud={packets.serial_conn.baudrate}')
     print(f'- data_len={data_len}')
+    print()
+    print('Press Ctrl+C to stop the test.')
     print()
 
     while True:

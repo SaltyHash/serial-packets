@@ -60,6 +60,17 @@ $ export PYTHONPATH=../../src/python
 $ python3 serialpackets_echotest.py <device>
 e.g.
 $ python3 serialpackets_echotest.py /dev/ttyACM0
+Waiting 3 seconds, because connecting to the Arduino causes it to reset...
+
+Starting echo test with:
+- baud=2000000
+- data_len=59
+
+Press Ctrl+C to stop the test.
+
+Bytes/s: 11900  Packets/s: 202  ms/packet: 4.958
+Bytes/s: 13300  Packets/s: 225  ms/packet: 4.436
+[...]
 ```
 
 Run `python3 serialpackets_echotest.py -h` to view all the optional arguments.
