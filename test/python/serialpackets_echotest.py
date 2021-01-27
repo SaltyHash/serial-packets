@@ -1,15 +1,23 @@
 import argparse
 import random
 import serial
-import serialpackets
+import sys
 import time
+
+try:
+    import serialpackets
+except ImportError as e:
+    print('Error:', e)
+    print('Did you forget to add serialpackets to the PYTHONPATH?')
+    print('export PYTHONPATH=../../src/python')
+    sys.exit(1)
 
 
 def speed_test(packets: serialpackets.SerialPackets):
     random.seed(0)
     data_len = packets.get_max_data_len()
 
-    print(f'Starting speed test with:')
+    print(f'Starting echo test with:')
     print(f'- baud={packets.serial_conn.baudrate}')
     print(f'- data_len={data_len}')
     print()
