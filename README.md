@@ -60,7 +60,8 @@ $ export PYTHONPATH=../../src/python
 $ python3 serialpackets_echotest.py <device>
 ```
 
-For example, this was the result of running `serialpackets_echotest.py` against an Arduino Uno:
+For example, this was the result of running `serialpackets_echotest.py` against an
+[Arduino Uno](https://store.arduino.cc/usa/arduino-uno-rev3):
 
 ```bash
 $ python3 serialpackets_echotest.py /dev/ttyACM0
