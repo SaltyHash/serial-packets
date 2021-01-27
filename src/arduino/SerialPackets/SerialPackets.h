@@ -26,7 +26,7 @@ class SerialPackets {
     /* Blocks until a valid packet is received, and returns the length of the
      * packet data now stored in data_buffer.
      */
-    int ReadPacket(uint8_t data_buffer[], const uint8_t buffer_len);
+    int Read(uint8_t data_buffer[], const uint8_t buffer_len);
 
     /* Receives a packet, but does NOT block if the packet has not yet been fully received.
      * This is very useful in real-time control applications where it is important for code
@@ -35,13 +35,13 @@ class SerialPackets {
      * Returns a -1 if a valid packet has not yet been fully received, but once a valid packet
      * HAS been fully received, the length of the packet data now stored in data_buffer is returned.
      */
-    int ReadPacketNonblocking(uint8_t data_buffer[], const uint8_t buffer_len);
+    int ReadNonblocking(uint8_t data_buffer[], const uint8_t buffer_len);
 
     /* Sends a packet containing the specified data. */
-    bool WritePacket(uint8_t data[], const uint8_t data_len);
+    bool Write(uint8_t data[], const uint8_t data_len);
 
     /* Sends a packet containing the specified string. */
-    bool WritePacket(char data[]);
+    bool Write(char data[]);
 
   private:
     enum class PacketTransitState {

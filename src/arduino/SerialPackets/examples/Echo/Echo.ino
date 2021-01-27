@@ -1,6 +1,6 @@
 #include <SerialPackets.h>
 
-// On most Arduinos, the serial buffer is 64 bytes long, but only 63 are actually useable
+// On most Arduinos, the serial buffer is 64 bytes long, but only 63 are actually usable
 const uint8_t serial_buffer_size = 64 - 1;
 
 // Create the buffer for the read packet data
@@ -19,11 +19,11 @@ void loop() {
   // Try to read a packet
   // This function is non-blocking, so if a packet has not been fully received yet,
   // this function will not prevent your other code from executing.
-  const int data_len = serial_packets.ReadPacketNonblocking(read_buffer, read_buffer_len);
+  const int data_len = serial_packets.ReadNonblocking(read_buffer, read_buffer_len);
 
   // A packet has been successfully received?
   if (data_len != -1) {
     // Echo the data right back
-    serial_packets.WritePacket(read_buffer, data_len);
+    serial_packets.Write(read_buffer, data_len);
   }
 }

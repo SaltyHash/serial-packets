@@ -2,9 +2,9 @@
 SerialPackets	KEYWORD1
 
 # Functions
-ReadPacket	KEYWORD2
-ReadPacketNonblocking	KEYWORD2
-WritePacket	KEYWORD2
+Read	KEYWORD2
+ReadNonblocking	KEYWORD2
+Write	KEYWORD2
 
 # Constants
 kPacketHeaderLen	LITERAL1

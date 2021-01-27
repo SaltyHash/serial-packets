@@ -22,18 +22,18 @@ SerialPackets::SerialPackets(Stream &stream) {
 }
 
 
-int SerialPackets::ReadPacket(uint8_t data_buffer[], const uint8_t buffer_len) {
+int SerialPackets::Read(uint8_t data_buffer[], const uint8_t buffer_len) {
   int data_len;
 
   do {
-    data_len = ReadPacketNonblocking(data_buffer, buffer_len);
+    data_len = ReadNonblocking(data_buffer, buffer_len);
   } while (data_len == -1);
 
   return data_len;
 }
 
 
-int SerialPackets::ReadPacketNonblocking(uint8_t buffer[], const uint8_t buffer_len) {
+int SerialPackets::ReadNonblocking(uint8_t buffer[], const uint8_t buffer_len) {
   // Discard the currently in-progress packet if there is no data to read
   // and we have reached the timeout
   if (read_packet_state_ != PacketTransitState::kStartByte
@@ -122,7 +122,7 @@ int SerialPackets::ReadPacketNonblocking(uint8_t buffer[], const uint8_t buffer_
 }
 
 
-bool SerialPackets::WritePacket(uint8_t data[], const uint8_t data_len) {
+bool SerialPackets::Write(uint8_t data[], const uint8_t data_len) {
   const uint16_t checksum = Fletcher16(data, data_len);
 
   int bytes_sent = stream_->write(kStartByte);
@@ -135,9 +135,9 @@ bool SerialPackets::WritePacket(uint8_t data[], const uint8_t data_len) {
 }
 
 
-bool SerialPackets::WritePacket(char data[]) {
+bool SerialPackets::Write(char data[]) {
   const uint8_t data_len = min(strlen(data), 255);
-  return WritePacket((uint8_t *)data, data_len);
+  return Write((uint8_t *)data, data_len);
 }
 
 
