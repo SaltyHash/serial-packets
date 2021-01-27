@@ -58,7 +58,11 @@ directly to ensure it is working, and to display speed statistics:
 $ cd test/python
 $ export PYTHONPATH=../../src/python
 $ python3 serialpackets_echotest.py <device>
-e.g.
+```
+
+For example, this was the result of running `serialpackets_echotest.py` against an Arduino Uno:
+
+```bash
 $ python3 serialpackets_echotest.py /dev/ttyACM0
 Waiting 3 seconds, because connecting to the Arduino causes it to reset...
 
@@ -70,6 +74,7 @@ Press Ctrl+C to stop the test.
 
 Bytes/s: 11900  Packets/s: 202  ms/packet: 4.958
 Bytes/s: 13300  Packets/s: 225  ms/packet: 4.436
+Bytes/s: 12835  Packets/s: 218  ms/packet: 4.597
 [...]
 ```
 
