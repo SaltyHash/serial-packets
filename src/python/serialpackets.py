@@ -99,7 +99,7 @@ class SerialPackets:
 
             self.serial_conn.flush()
 
-    def write_then_read_packet(self, data: Union[bytearray, bytes], reset_input_buffer: bool = True) -> Optional[bytes]:
+    def write_then_read(self, data: Union[bytearray, bytes], reset_input_buffer: bool = True) -> Optional[bytes]:
         """
         Writes a packet, and then reads a packet expected to be sent in response.
 

@@ -35,7 +35,7 @@ def speed_test(packets: serialpackets.SerialPackets):
 
             start_time = time.time()
             try:
-                response = packets.write_then_read_packet(data)
+                response = packets.write_then_read(data)
             except (serialpackets.ChecksumError, serialpackets.WritePacketError) as e:
                 print(e)
                 continue
