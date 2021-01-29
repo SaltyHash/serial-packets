@@ -15,7 +15,7 @@ except ImportError as e:
 
 def speed_test(packets: serialpackets.SerialPackets):
     random.seed(0)
-    data_len = packets.get_max_data_len()
+    data_len = packets.max_data_len
 
     print()
     print(f'Starting echo test with:')

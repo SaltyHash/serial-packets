@@ -22,19 +22,29 @@ class SerialPackets:
         """
 
         self.serial_conn = serial_conn
+        self.max_data_len = max_data_len
+
+        self._read_lock = RLock()
+        self._write_lock = RLock()
+
+    @property
+    def max_data_len(self) -> int:
+        """The maximum length of the data that can be sent in a packet."""
+        return self._max_data_len
+
+    @max_data_len.setter
+    def max_data_len(self, max_data_len) -> None:
+        """
+        The maximum length of the data that can be sent in a packet.
+        :param max_data_len: Must be in range [0, MAX_ALLOWED_DTA_LEN], inclusive.
+        """
 
         if max_data_len < 0:
             raise ValueError(f'max_data_len must be >= 0; got {max_data_len}.')
         if max_data_len > MAX_ALLOWED_DATA_LEN:
             raise ValueError(f'max_data_len must be <= {MAX_ALLOWED_DATA_LEN}; got {max_data_len}.')
+
         self._max_data_len = max_data_len
-
-        self._read_lock = RLock()
-        self._write_lock = RLock()
-
-    def get_max_data_len(self) -> int:
-        """Returns the maximum length of the data that can be sent in a packet."""
-        return self._max_data_len
 
     def read(self) -> Optional[bytes]:
         """
@@ -74,17 +84,20 @@ class SerialPackets:
 
         return data
 
-    def write(self, data: Union[bytearray, bytes]) -> None:
+    def write(self, data: Union[bytearray, bytes], flush: bool = True) -> None:
         """
-        Returns True if the packet was sent, or False if it was not (in which case it may have been partially sent).
+        Sends a packet containing the specified data.
 
         This method is thread-safe.
 
+        :param data: The data to send in the packet.
+        :param flush: If True (the default), then the serial connection's "flush()" method will be called, which will
+            block until all bytes have been sent.
         :raises WritePacketError: If something goes wrong writing the packet.
         """
 
-        if len(data) > self._max_data_len:
-            raise ValueError(f'data must be <= {self._max_data_len} bytes long; '
+        if len(data) > self.max_data_len:
+            raise ValueError(f'data must be <= {self.max_data_len} bytes long; '
                              f'given data is {len(data)} bytes long.')
 
         packet = bytearray()
@@ -97,19 +110,25 @@ class SerialPackets:
             if self.serial_conn.write(packet) < len(packet):
                 raise WritePacketError('Failed to write all packet bytes.')
 
-            self.serial_conn.flush()
+            if flush:
+                try:
+                    self.serial_conn.flush()
+                except AttributeError:
+                    pass
 
     def write_then_read(self, data: Union[bytearray, bytes], reset_input_buffer: bool = True) -> Optional[bytes]:
         """
-        Writes a packet, and then reads a packet expected to be sent in response.
+        Writes a packet, and then reads a packet expected to be sent in response, and returns the data.
 
         This method is thread-safe.
 
         :param data: Bytes to send in the packet.
-        :param reset_input_buffer: If True, the serial connection's input buffer will be cleared, discarding any
-            previously received data. This helps to ensure that the next received packet is one which comes after the
-            packet we send, and is not a packet that might have been received previously.
+        :param reset_input_buffer: If True (the default), the serial connection's input buffer will be cleared,
+            discarding any previously received data. This helps to ensure that the next received packet is one which
+            comes after the packet we send, and is not a packet that might have been received previously.
         :return: The bytes from the received packet, or None if timed out waiting to receive a packet.
+        :raises ChecksumError: If the calculated checksum of the received packet does not match the packet checksum.
+        :raises WritePacketError: If something goes wrong writing the packet.
         """
 
         with self._write_lock, self._read_lock:
@@ -123,7 +142,12 @@ class SerialPackets:
             return self.read()
 
 
-class ChecksumError(Exception):
+class SerialPacketsError(Exception):
+    """Base class for all errors in the serialpackets library."""
+    pass
+
+
+class ChecksumError(SerialPacketsError):
     """Raised when a packet's checksum does not match the calculated checksum."""
 
     def __init__(self, received_checksum: bytes, calculated_checksum: bytes):
@@ -131,7 +155,7 @@ class ChecksumError(Exception):
                          f'Calculated checksum: {list(calculated_checksum)}.')
 
 
-class WritePacketError(Exception):
+class WritePacketError(SerialPacketsError):
     """Raised when we fail to write a packet."""
     pass
 
