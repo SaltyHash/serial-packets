@@ -22,7 +22,7 @@ class SerialPackets:
         """
 
         self.serial_conn = serial_conn
-        self.max_data_len = max_data_len
+        self._max_data_len = max_data_len
 
         self._read_lock = RLock()
         self._write_lock = RLock()
